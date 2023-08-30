@@ -40,6 +40,7 @@
 #include "oops/method.hpp"
 #include "oops/methodData.hpp"
 #include "oops/oop.inline.hpp"
+#include "oops/resolvedIndyEntry.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiThreadState.hpp"
 #include "runtime/arguments.hpp"
@@ -52,6 +53,7 @@
 #include "runtime/synchronizer.hpp"
 #include "runtime/timer.hpp"
 #include "runtime/vframeArray.hpp"
+#include "utilities/checkedCast.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include <sys/types.h>
@@ -425,7 +427,8 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, 
   address entry = __ pc();
 
   // Restore stack bottom in case i2c adjusted stack
-  __ ld(esp, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
+  __ ld(t0, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
+  __ shadd(esp, t0, fp,  t0,  LogBytesPerWord);
   // and null it as marker that esp is now tos until next java call
   __ sd(zr, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
   __ restore_bcp();
@@ -482,7 +485,8 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state,
   __ restore_sp_after_call();  // Restore SP to extended SP
 
   // Restore expression stack pointer
-  __ ld(esp, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
+  __ ld(t0, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
+  __ shadd(esp, t0, fp,  t0,  LogBytesPerWord);
   // null last_sp until next java call
   __ sd(zr, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
 
@@ -600,7 +604,7 @@ void TemplateInterpreterGenerator::generate_stack_overflow_check(void) {
 
   // monitor entry size: see picture of stack set
   // (generate_method_entry) and frame_amd64.hpp
-  const int entry_size = frame::interpreter_frame_monitor_size() * wordSize;
+  const int entry_size = frame::interpreter_frame_monitor_size_in_bytes();
 
   // total overhead size: entry_size + (saved fp through expr stack
   // bottom).  be sure to change this if you add/subtract anything
@@ -673,7 +677,7 @@ void TemplateInterpreterGenerator::lock_method() {
   // synchronize method
   const Address access_flags(xmethod, Method::access_flags_offset());
   const Address monitor_block_top(fp, frame::interpreter_frame_monitor_block_top_offset * wordSize);
-  const int entry_size = frame::interpreter_frame_monitor_size() * wordSize;
+  const int entry_size = frame::interpreter_frame_monitor_size_in_bytes();
 
 #ifdef ASSERT
   __ lwu(x10, access_flags);
@@ -709,7 +713,7 @@ void TemplateInterpreterGenerator::lock_method() {
   __ sd(sp, Address(fp, frame::interpreter_frame_extended_sp_offset * wordSize));
   __ sd(esp, monitor_block_top);  // set new monitor block top
   // store object
-  __ sd(x10, Address(esp, BasicObjectLock::obj_offset_in_bytes()));
+  __ sd(x10, Address(esp, BasicObjectLock::obj_offset()));
   __ mv(c_rarg1, esp); // object address
   __ lock_object(c_rarg1);
 }
@@ -758,7 +762,7 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
 
   __ ld(xcpool, Address(xmethod, Method::const_offset()));
   __ ld(xcpool, Address(xcpool, ConstMethod::constants_offset()));
-  __ ld(xcpool, Address(xcpool, ConstantPool::cache_offset_in_bytes()));
+  __ ld(xcpool, Address(xcpool, ConstantPool::cache_offset()));
   __ sd(xcpool, Address(sp, 3 * wordSize));
   __ sub(t0, xlocals, fp);
   __ srai(t0, t0, Interpreter::logStackElementSize);   // t0 = xlocals - fp();
@@ -770,8 +774,10 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
   __ sd(x19_sender_sp, Address(sp, 9 * wordSize));
   __ sd(zr, Address(sp, 8 * wordSize));
 
-  // Get mirror
+  // Get mirror and store it in the frame as GC root for this Method*
   __ load_mirror(t2, xmethod, x15, t1);
+  __ sd(t2, Address(sp, 4 * wordSize));
+
   if (!native_call) {
     __ ld(t0, Address(xmethod, Method::const_offset()));
     __ lhu(t0, Address(t0, ConstMethod::max_stack_offset()));
@@ -779,9 +785,8 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
     __ slli(t0, t0, 3);
     __ sub(t0, sp, t0);
     __ andi(t0, t0, -16);
-    // Store extended SP and mirror
+    // Store extended SP
     __ sd(t0, Address(sp, 5 * wordSize));
-    __ sd(t2, Address(sp, 4 * wordSize));
     // Move SP out of the way
     __ mv(sp, t0);
   } else {
@@ -789,7 +794,6 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
     // an exception (see TemplateInterpreterGenerator::generate_throw_exception())
     __ sub(t0, sp, 2 * wordSize);
     __ sd(t0, Address(sp, 5 * wordSize));
-    __ sd(zr, Address(sp, 4 * wordSize));
     __ mv(sp, t0);
   }
 }
@@ -1097,8 +1101,9 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
     Label L;
     __ ld(x28, Address(xmethod, Method::native_function_offset()));
     address unsatisfied = (SharedRuntime::native_method_throw_unsatisfied_link_error_entry());
-    __ mv(t1, unsatisfied);
-    __ ld(t1, Address(t1, 0));
+    __ mv(t, unsatisfied);
+    __ load_long_misaligned(t1, Address(t, 0), t0, 2); // 2 bytes aligned, but not 4 or 8
+
     __ bne(x28, t1, L);
     __ call_VM(noreg,
                CAST_FROM_FN_PTR(address,
@@ -1210,7 +1215,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
 
   // reset handle block
   __ ld(t, Address(xthread, JavaThread::active_handles_offset()));
-  __ sd(zr, Address(t, JNIHandleBlock::top_offset_in_bytes()));
+  __ sd(zr, Address(t, JNIHandleBlock::top_offset()));
 
   // If result is an oop unbox and store it in frame where gc will see it
   // and result handler will pick it up
@@ -1285,7 +1290,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
                              (intptr_t)(frame::interpreter_frame_initial_sp_offset *
                                         wordSize - sizeof(BasicObjectLock))));
 
-      __ ld(t, Address(c_rarg1, BasicObjectLock::obj_offset_in_bytes()));
+      __ ld(t, Address(c_rarg1, BasicObjectLock::obj_offset()));
       __ bnez(t, unlock);
 
       // Entry already unlocked, need to throw exception
@@ -1602,7 +1607,8 @@ void TemplateInterpreterGenerator::generate_throw_exception() {
                        /* notify_jvmdi */ false);
 
   // Restore the last_sp and null it out
-  __ ld(esp, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
+  __ ld(t0, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
+  __ shadd(esp, t0, fp,  t0,  LogBytesPerWord);
   __ sd(zr, Address(fp, frame::interpreter_frame_last_sp_offset * wordSize));
 
   __ restore_bcp();
@@ -1785,8 +1791,7 @@ void TemplateInterpreterGenerator::histogram_bytecode_pair(Template* t) {
   //   _counters[_index] ++;
   Register counter_addr = t1;
   __ mv(x7, (address) &BytecodePairHistogram::_counters);
-  __ slli(index, index, LogBytesPerInt);
-  __ add(counter_addr, x7, index);
+  __ shadd(counter_addr, index, x7, counter_addr, LogBytesPerInt);
   __ atomic_addw(noreg, 1, counter_addr);
  }
 
