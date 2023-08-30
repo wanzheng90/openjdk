@@ -185,10 +185,11 @@ final class DualPivotQuicksort {
             }
 
             /*
-             * Use an inexpensive approximation of the golden ratio
-             * to select five sample elements and determine pivots.
+             * Divide the given array into the golden ratio using
+             * an inexpensive approximation to select five sample
+             * elements and determine pivots.
              */
-            int step = (size >> 2) + (size >> 3) + (size >> 8) + 1;
+            int step = (size >> 2) + (size >> 3) + (size >> 7);
 
             /*
              * Five elements around (and including) the central element
@@ -205,28 +206,29 @@ final class DualPivotQuicksort {
             int a3 = a[e3];
 
             /*
-             * Check large random data, taking into account parallel context.
+             * Check if part is large and contains random
+             * data, taking into account parallel context.
              */
             boolean isLargeRandom = size > MIN_RADIX_SORT_SIZE
                 && (sorter == null || bits > 0)
                 && (a[e1] > a[e2] || a[e2] > a3 || a3 > a[e4] || a[e4] > a[e5]);
 
             /*
-             * Sort these elements in place by the combination
+             * Sort these elements in-place by the combination
              * of 4-element sorting network and insertion sort.
              *
-             *    1  ------------o-----o------------
-             *                   |     |
-             *    2  ------o-----|-----o-----o------
-             *             |     |           |
-             *    4  ------|-----o-----o-----o------
-             *             |           |
-             *    5  ------o-----------o------------
+             *   1 ----------o-------------o------------------
+             *               |             |
+             *   2 ----------|------o------o------o-----------
+             *               |      |             |
+             *   4 ----------o------|------o------o-----------
+             *                      |      |
+             *   5 -----------------o------o------------------
              */
-            if (a[e2] > a[e5]) { int t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e1] > a[e4]) { int t = a[e1]; a[e1] = a[e4]; a[e4] = t; }
-            if (a[e1] > a[e2]) { int t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
+            if (a[e2] > a[e5]) { int t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e4] > a[e5]) { int t = a[e4]; a[e4] = a[e5]; a[e5] = t; }
+            if (a[e1] > a[e2]) { int t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
             if (a[e2] > a[e4]) { int t = a[e2]; a[e2] = a[e4]; a[e4] = t; }
 
             /*
@@ -320,7 +322,7 @@ final class DualPivotQuicksort {
                 for (int unused = --lower, k = ++upper; --k > lower; ) {
                     int ak = a[k];
 
-                    if (ak < pivot1) { // Move a[k] to the left side
+                    if (ak < pivot1) { // Move a[k] to the left part
                         while (a[++lower] < pivot1) {
                             if (lower == k) {
                                 break;
@@ -333,7 +335,7 @@ final class DualPivotQuicksort {
                             a[k] = a[lower];
                         }
                         a[lower] = ak;
-                    } else if (ak > pivot2) { // Move a[k] to the right side
+                    } else if (ak > pivot2) { // Move a[k] to the right part
                         a[k] = a[--upper];
                         a[upper] = ak;
                     }
@@ -401,14 +403,14 @@ final class DualPivotQuicksort {
                     if (ak != pivot) {
                         a[k] = pivot;
 
-                        if (ak < pivot) { // Move a[k] to the left side
+                        if (ak < pivot) { // Move a[k] to the left part
                             while (a[++lower] < pivot);
 
                             if (a[lower] > pivot) {
                                 a[--upper] = a[lower];
                             }
                             a[lower] = ak;
-                        } else { // ak > pivot - Move a[k] to the right side
+                        } else { // ak > pivot - Move a[k] to the right part
                             a[--upper] = ak;
                         }
                     }
@@ -913,7 +915,7 @@ final class DualPivotQuicksort {
     private static boolean processDigit(int[] count, int total, int low) {
 
         /*
-         * Check if we can skip given digit.
+         * Check if we can skip the given digit.
          */
         for (int c : count) {
             if (c == total) {
@@ -1043,10 +1045,11 @@ final class DualPivotQuicksort {
             }
 
             /*
-             * Use an inexpensive approximation of the golden ratio
-             * to select five sample elements and determine pivots.
+             * Divide the given array into the golden ratio using
+             * an inexpensive approximation to select five sample
+             * elements and determine pivots.
              */
-            int step = (size >> 2) + (size >> 3) + (size >> 8) + 1;
+            int step = (size >> 2) + (size >> 3) + (size >> 7);
 
             /*
              * Five elements around (and including) the central element
@@ -1063,28 +1066,29 @@ final class DualPivotQuicksort {
             long a3 = a[e3];
 
             /*
-             * Check large random data, taking into account parallel context.
+             * Check if part is large and contains random
+             * data, taking into account parallel context.
              */
             boolean isLargeRandom = size > MIN_RADIX_SORT_SIZE
                 && (sorter == null || bits > 0)
                 && (a[e1] > a[e2] || a[e2] > a3 || a3 > a[e4] || a[e4] > a[e5]);
 
             /*
-             * Sort these elements in place by the combination
+             * Sort these elements in-place by the combination
              * of 4-element sorting network and insertion sort.
              *
-             *    1  ------------o-----o------------
-             *                   |     |
-             *    2  ------o-----|-----o-----o------
-             *             |     |           |
-             *    4  ------|-----o-----o-----o------
-             *             |           |
-             *    5  ------o-----------o------------
+             *   1 ----------o-------------o------------------
+             *               |             |
+             *   2 ----------|------o------o------o-----------
+             *               |      |             |
+             *   4 ----------o------|------o------o-----------
+             *                      |      |
+             *   5 -----------------o------o------------------
              */
-            if (a[e2] > a[e5]) { long t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e1] > a[e4]) { long t = a[e1]; a[e1] = a[e4]; a[e4] = t; }
-            if (a[e1] > a[e2]) { long t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
+            if (a[e2] > a[e5]) { long t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e4] > a[e5]) { long t = a[e4]; a[e4] = a[e5]; a[e5] = t; }
+            if (a[e1] > a[e2]) { long t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
             if (a[e2] > a[e4]) { long t = a[e2]; a[e2] = a[e4]; a[e4] = t; }
 
             /*
@@ -1178,7 +1182,7 @@ final class DualPivotQuicksort {
                 for (int unused = --lower, k = ++upper; --k > lower; ) {
                     long ak = a[k];
 
-                    if (ak < pivot1) { // Move a[k] to the left side
+                    if (ak < pivot1) { // Move a[k] to the left part
                         while (a[++lower] < pivot1) {
                             if (lower == k) {
                                 break;
@@ -1191,7 +1195,7 @@ final class DualPivotQuicksort {
                             a[k] = a[lower];
                         }
                         a[lower] = ak;
-                    } else if (ak > pivot2) { // Move a[k] to the right side
+                    } else if (ak > pivot2) { // Move a[k] to the right part
                         a[k] = a[--upper];
                         a[upper] = ak;
                     }
@@ -1259,14 +1263,14 @@ final class DualPivotQuicksort {
                     if (ak != pivot) {
                         a[k] = pivot;
 
-                        if (ak < pivot) { // Move a[k] to the left side
+                        if (ak < pivot) { // Move a[k] to the left part
                             while (a[++lower] < pivot);
 
                             if (a[lower] > pivot) {
                                 a[--upper] = a[lower];
                             }
                             a[lower] = ak;
-                        } else { // ak > pivot - Move a[k] to the right side
+                        } else { // ak > pivot - Move a[k] to the right part
                             a[--upper] = ak;
                         }
                     }
@@ -2021,10 +2025,11 @@ final class DualPivotQuicksort {
             }
 
             /*
-             * Use an inexpensive approximation of the golden ratio
-             * to select five sample elements and determine pivots.
+             * Divide the given array into the golden ratio using
+             * an inexpensive approximation to select five sample
+             * elements and determine pivots.
              */
-            int step = (size >> 2) + (size >> 3) + (size >> 8) + 1;
+            int step = (size >> 2) + (size >> 3) + (size >> 7);
 
             /*
              * Five elements around (and including) the central element
@@ -2041,21 +2046,21 @@ final class DualPivotQuicksort {
             char a3 = a[e3];
 
             /*
-             * Sort these elements in place by the combination
+             * Sort these elements in-place by the combination
              * of 4-element sorting network and insertion sort.
              *
-             *    1  ------------o-----o------------
-             *                   |     |
-             *    2  ------o-----|-----o-----o------
-             *             |     |           |
-             *    4  ------|-----o-----o-----o------
-             *             |           |
-             *    5  ------o-----------o------------
+             *   1 ----------o-------------o------------------
+             *               |             |
+             *   2 ----------|------o------o------o-----------
+             *               |      |             |
+             *   4 ----------o------|------o------o-----------
+             *                      |      |
+             *   5 -----------------o------o------------------
              */
-            if (a[e2] > a[e5]) { char t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e1] > a[e4]) { char t = a[e1]; a[e1] = a[e4]; a[e4] = t; }
-            if (a[e1] > a[e2]) { char t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
+            if (a[e2] > a[e5]) { char t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e4] > a[e5]) { char t = a[e4]; a[e4] = a[e5]; a[e5] = t; }
+            if (a[e1] > a[e2]) { char t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
             if (a[e2] > a[e4]) { char t = a[e2]; a[e2] = a[e4]; a[e4] = t; }
 
             /*
@@ -2132,7 +2137,7 @@ final class DualPivotQuicksort {
                 for (int unused = --lower, k = ++upper; --k > lower; ) {
                     char ak = a[k];
 
-                    if (ak < pivot1) { // Move a[k] to the left side
+                    if (ak < pivot1) { // Move a[k] to the left part
                         while (a[++lower] < pivot1) {
                             if (lower == k) {
                                 break;
@@ -2145,7 +2150,7 @@ final class DualPivotQuicksort {
                             a[k] = a[lower];
                         }
                         a[lower] = ak;
-                    } else if (ak > pivot2) { // Move a[k] to the right side
+                    } else if (ak > pivot2) { // Move a[k] to the right part
                         a[k] = a[--upper];
                         a[upper] = ak;
                     }
@@ -2208,14 +2213,14 @@ final class DualPivotQuicksort {
                     if (ak != pivot) {
                         a[k] = pivot;
 
-                        if (ak < pivot) { // Move a[k] to the left side
+                        if (ak < pivot) { // Move a[k] to the left part
                             while (a[++lower] < pivot);
 
                             if (a[lower] > pivot) {
                                 a[--upper] = a[lower];
                             }
                             a[lower] = ak;
-                        } else { // ak > pivot - Move a[k] to the right side
+                        } else { // ak > pivot - Move a[k] to the right part
                             a[--upper] = ak;
                         }
                     }
@@ -2348,10 +2353,11 @@ final class DualPivotQuicksort {
             }
 
             /*
-             * Use an inexpensive approximation of the golden ratio
-             * to select five sample elements and determine pivots.
+             * Divide the given array into the golden ratio using
+             * an inexpensive approximation to select five sample
+             * elements and determine pivots.
              */
-            int step = (size >> 2) + (size >> 3) + (size >> 8) + 1;
+            int step = (size >> 2) + (size >> 3) + (size >> 7);
 
             /*
              * Five elements around (and including) the central element
@@ -2368,21 +2374,21 @@ final class DualPivotQuicksort {
             short a3 = a[e3];
 
             /*
-             * Sort these elements in place by the combination
+             * Sort these elements in-place by the combination
              * of 4-element sorting network and insertion sort.
              *
-             *    1  ------------o-----o------------
-             *                   |     |
-             *    2  ------o-----|-----o-----o------
-             *             |     |           |
-             *    4  ------|-----o-----o-----o------
-             *             |           |
-             *    5  ------o-----------o------------
+             *   1 ----------o-------------o------------------
+             *               |             |
+             *   2 ----------|------o------o------o-----------
+             *               |      |             |
+             *   4 ----------o------|------o------o-----------
+             *                      |      |
+             *   5 -----------------o------o------------------
              */
-            if (a[e2] > a[e5]) { short t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e1] > a[e4]) { short t = a[e1]; a[e1] = a[e4]; a[e4] = t; }
-            if (a[e1] > a[e2]) { short t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
+            if (a[e2] > a[e5]) { short t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e4] > a[e5]) { short t = a[e4]; a[e4] = a[e5]; a[e5] = t; }
+            if (a[e1] > a[e2]) { short t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
             if (a[e2] > a[e4]) { short t = a[e2]; a[e2] = a[e4]; a[e4] = t; }
 
             /*
@@ -2459,7 +2465,7 @@ final class DualPivotQuicksort {
                 for (int unused = --lower, k = ++upper; --k > lower; ) {
                     short ak = a[k];
 
-                    if (ak < pivot1) { // Move a[k] to the left side
+                    if (ak < pivot1) { // Move a[k] to the left part
                         while (a[++lower] < pivot1) {
                             if (lower == k) {
                                 break;
@@ -2472,7 +2478,7 @@ final class DualPivotQuicksort {
                             a[k] = a[lower];
                         }
                         a[lower] = ak;
-                    } else if (ak > pivot2) { // Move a[k] to the right side
+                    } else if (ak > pivot2) { // Move a[k] to the right part
                         a[k] = a[--upper];
                         a[upper] = ak;
                     }
@@ -2535,14 +2541,14 @@ final class DualPivotQuicksort {
                     if (ak != pivot) {
                         a[k] = pivot;
 
-                        if (ak < pivot) { // Move a[k] to the left side
+                        if (ak < pivot) { // Move a[k] to the left part
                             while (a[++lower] < pivot);
 
                             if (a[lower] > pivot) {
                                 a[--upper] = a[lower];
                             }
                             a[lower] = ak;
-                        } else { // ak > pivot - Move a[k] to the right side
+                        } else { // ak > pivot - Move a[k] to the right part
                             a[--upper] = ak;
                         }
                     }
@@ -2701,10 +2707,11 @@ final class DualPivotQuicksort {
             }
 
             /*
-             * Use an inexpensive approximation of the golden ratio
-             * to select five sample elements and determine pivots.
+             * Divide the given array into the golden ratio using
+             * an inexpensive approximation to select five sample
+             * elements and determine pivots.
              */
-            int step = (size >> 2) + (size >> 3) + (size >> 8) + 1;
+            int step = (size >> 2) + (size >> 3) + (size >> 7);
 
             /*
              * Five elements around (and including) the central element
@@ -2721,28 +2728,29 @@ final class DualPivotQuicksort {
             float a3 = a[e3];
 
             /*
-             * Check large random data, taking into account parallel context.
+             * Check if part is large and contains random
+             * data, taking into account parallel context.
              */
             boolean isLargeRandom = size > MIN_RADIX_SORT_SIZE
                 && (sorter == null || bits > 0)
                 && (a[e1] > a[e2] || a[e2] > a3 || a3 > a[e4] || a[e4] > a[e5]);
 
             /*
-             * Sort these elements in place by the combination
+             * Sort these elements in-place by the combination
              * of 4-element sorting network and insertion sort.
              *
-             *    1  ------------o-----o------------
-             *                   |     |
-             *    2  ------o-----|-----o-----o------
-             *             |     |           |
-             *    4  ------|-----o-----o-----o------
-             *             |           |
-             *    5  ------o-----------o------------
+             *   1 ----------o-------------o------------------
+             *               |             |
+             *   2 ----------|------o------o------o-----------
+             *               |      |             |
+             *   4 ----------o------|------o------o-----------
+             *                      |      |
+             *   5 -----------------o------o------------------
              */
-            if (a[e2] > a[e5]) { float t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e1] > a[e4]) { float t = a[e1]; a[e1] = a[e4]; a[e4] = t; }
-            if (a[e1] > a[e2]) { float t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
+            if (a[e2] > a[e5]) { float t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e4] > a[e5]) { float t = a[e4]; a[e4] = a[e5]; a[e5] = t; }
+            if (a[e1] > a[e2]) { float t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
             if (a[e2] > a[e4]) { float t = a[e2]; a[e2] = a[e4]; a[e4] = t; }
 
             /*
@@ -2836,7 +2844,7 @@ final class DualPivotQuicksort {
                 for (int unused = --lower, k = ++upper; --k > lower; ) {
                     float ak = a[k];
 
-                    if (ak < pivot1) { // Move a[k] to the left side
+                    if (ak < pivot1) { // Move a[k] to the left part
                         while (a[++lower] < pivot1) {
                             if (lower == k) {
                                 break;
@@ -2849,7 +2857,7 @@ final class DualPivotQuicksort {
                             a[k] = a[lower];
                         }
                         a[lower] = ak;
-                    } else if (ak > pivot2) { // Move a[k] to the right side
+                    } else if (ak > pivot2) { // Move a[k] to the right part
                         a[k] = a[--upper];
                         a[upper] = ak;
                     }
@@ -2917,14 +2925,14 @@ final class DualPivotQuicksort {
                     if (ak != pivot) {
                         a[k] = pivot;
 
-                        if (ak < pivot) { // Move a[k] to the left side
+                        if (ak < pivot) { // Move a[k] to the left part
                             while (a[++lower] < pivot);
 
                             if (a[lower] > pivot) {
                                 a[--upper] = a[lower];
                             }
                             a[lower] = ak;
-                        } else { // ak > pivot - Move a[k] to the right side
+                        } else { // ak > pivot - Move a[k] to the right part
                             a[--upper] = ak;
                         }
                     }
@@ -3589,10 +3597,11 @@ final class DualPivotQuicksort {
             }
 
             /*
-             * Use an inexpensive approximation of the golden ratio
-             * to select five sample elements and determine pivots.
+             * Divide the given array into the golden ratio using
+             * an inexpensive approximation to select five sample
+             * elements and determine pivots.
              */
-            int step = (size >> 2) + (size >> 3) + (size >> 8) + 1;
+            int step = (size >> 2) + (size >> 3) + (size >> 7);
 
             /*
              * Five elements around (and including) the central element
@@ -3609,28 +3618,29 @@ final class DualPivotQuicksort {
             double a3 = a[e3];
 
             /*
-             * Check large random data, taking into account parallel context.
+             * Check if part is large and contains random
+             * data, taking into account parallel context.
              */
             boolean isLargeRandom = size > MIN_RADIX_SORT_SIZE
                 && (sorter == null || bits > 0)
                 && (a[e1] > a[e2] || a[e2] > a3 || a3 > a[e4] || a[e4] > a[e5]);
 
             /*
-             * Sort these elements in place by the combination
+             * Sort these elements in-place by the combination
              * of 4-element sorting network and insertion sort.
              *
-             *    1  ------------o-----o------------
-             *                   |     |
-             *    2  ------o-----|-----o-----o------
-             *             |     |           |
-             *    4  ------|-----o-----o-----o------
-             *             |           |
-             *    5  ------o-----------o------------
+             *   1 ----------o-------------o------------------
+             *               |             |
+             *   2 ----------|------o------o------o-----------
+             *               |      |             |
+             *   4 ----------o------|------o------o-----------
+             *                      |      |
+             *   5 -----------------o------o------------------
              */
-            if (a[e2] > a[e5]) { double t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e1] > a[e4]) { double t = a[e1]; a[e1] = a[e4]; a[e4] = t; }
-            if (a[e1] > a[e2]) { double t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
+            if (a[e2] > a[e5]) { double t = a[e2]; a[e2] = a[e5]; a[e5] = t; }
             if (a[e4] > a[e5]) { double t = a[e4]; a[e4] = a[e5]; a[e5] = t; }
+            if (a[e1] > a[e2]) { double t = a[e1]; a[e1] = a[e2]; a[e2] = t; }
             if (a[e2] > a[e4]) { double t = a[e2]; a[e2] = a[e4]; a[e4] = t; }
 
             /*
@@ -3724,7 +3734,7 @@ final class DualPivotQuicksort {
                 for (int unused = --lower, k = ++upper; --k > lower; ) {
                     double ak = a[k];
 
-                    if (ak < pivot1) { // Move a[k] to the left side
+                    if (ak < pivot1) { // Move a[k] to the left part
                         while (a[++lower] < pivot1) {
                             if (lower == k) {
                                 break;
@@ -3737,7 +3747,7 @@ final class DualPivotQuicksort {
                             a[k] = a[lower];
                         }
                         a[lower] = ak;
-                    } else if (ak > pivot2) { // Move a[k] to the right side
+                    } else if (ak > pivot2) { // Move a[k] to the right part
                         a[k] = a[--upper];
                         a[upper] = ak;
                     }
@@ -3805,14 +3815,14 @@ final class DualPivotQuicksort {
                     if (ak != pivot) {
                         a[k] = pivot;
 
-                        if (ak < pivot) { // Move a[k] to the left side
+                        if (ak < pivot) { // Move a[k] to the left part
                             while (a[++lower] < pivot);
 
                             if (a[lower] > pivot) {
                                 a[--upper] = a[lower];
                             }
                             a[lower] = ak;
-                        } else { // ak > pivot - Move a[k] to the right side
+                        } else { // ak > pivot - Move a[k] to the right part
                             a[--upper] = ak;
                         }
                     }
