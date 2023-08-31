@@ -1515,3 +1515,87 @@ jdk.tls.alpnCharset=ISO_8859_1
 #
 # [1] https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-sfu/bde93b0e-f3c9-4ddf-9f44-e1453be7af5a
 #jdk.security.krb5.s4u2proxy.acceptNonForwardableServiceTicket=false
+
+#
+# Security Providers Filter
+#
+# This filter can be used to select which security services (combination of a
+# provider, service type and algorithm) are allowed in the Java security APIs.
+# Services that belong either to statically enabled security providers
+# (security.provider.<n> security property) or dynamically added ones
+# (Security::addProvider API) are subject to the restrictions of this filter.
+# A service is evaluated against this filter when a provider registers it
+# (java.security.Provider::put or java.security.Provider::putService APIs) or returns
+# an unregistered instance (after overriding java.security.Provider::getService
+# or java.security.Provider::getServices APIs).
+#
+# Filtering out a cryptographic algorithm will block its use in TLS connections,
+# JAR signing, certificates paths validation and in any other Java Cryptography
+# Architecture API. The effect of blocking an algorithm applies on top of security
+# properties that concern specific uses of it, such as jdk.tls.disabledAlgorithms,
+# jdk.jar.disabledAlgorithms or jdk.certpath.disabledAlgorithms. However, an
+# algorithm allowed by a filter is still subject to the aforementioned properties.
+#
+# If the system property jdk.security.providers.filter is specified, it supersedes
+# the security property value defined here. If any of these properties is set at
+# run time, the filter could be initialized already and the new value may not take
+# effect until the JVM is relaunched. When a filter is not specified or is the empty
+# string, filtering is disabled: all services are allowed.
+#
+# A filter value has the following structure:
+#
+# pattern-1; pattern-2; ...; pattern-n
+#
+# Each pattern in the sequence can be optionally prefixed by a '!' character (i.e.
+# " ! pattern-1 "). Whitespaces between patterns, pattern prefixes ('!') and pattern
+# separators (';') are not significant. A service is evaluated against the filter
+# from left to right. If a service matches one of the patterns in the sequence, an
+# authorization decision is made: if the pattern is prefixed by a '!', the decision
+# is to deny it; otherwise, the decision is to allow it. If none of the patterns
+# match, the default decision is to deny it. Once a decision is made, the remaining
+# patterns are not evaluated.
+#
+# A pattern has one the following forms:
+#
+# 1) security-provider
+# 2) security-provider.service-type
+# 3) security-provider.service-type.algorithm
+# 4) security-provider.service-type.algorithm-alias
+#
+# In form #1, a service provider name equal to "security-provider" is enough for a
+# match to be successful. In form #2, the service type must also be equal to
+# "service-type". In form #3, the service algorithm must also be equal to "algorithm".
+# In form #4, it is enough that one of the service aliases matches "algorithm-alias",
+# in addition to the requirements for form #2. In all cases, pattern and service
+# names must have valid characters and cannot be empty.
+#
+# Characters '\n' and '\0' are not valid in a pattern. The following characters,
+# when part of a pattern provider, service type, algorithm or alias, must be escaped
+# by prepending a '\' character: '!', '*', ' ' (whitespace), '.', ';', '\', ':' and
+# ','. Escaping any other character has no effect other than discarding the '\'
+# escape character. These escaping rules apply to the filter value as read in
+# java.lang.System::getProperty or java.security.Security::getProperty: additional
+# escaping might be needed depending on how the property is passed. For example,
+# security properties require '\' characters to be escaped. Thus, to match a service
+# provider whose name is "\", a pattern must be "\\\\" if passed as a security property.
+#
+# In addition to characters escaping, pattern names can contain '*' wildcards to
+# imply zero or more repetitions of any character. Wildcards behave in a greedy mode,
+# trying to consume as many characters as possible and backing off if necessary.
+# Pattern matching is always case insensitive.
+#
+# When a service has aliases, the algorithm and each alias are independently evaluated
+# against the filter. From the set of authorization decisions obtained, the one made
+# by the left-most pattern has the highest priority and is finally effective.
+#
+# For troubleshooting, enable filter debugging output with the system property
+# java.security.debug=jca and look for messages prefixed by "ProvidersFilter". To
+# verify the list of services allowed for each installed security provider, run the
+# JVM with the argument -XshowSettings:security:providers.
+#
+# Example
+#
+# Enable all services except those involving the algorithms MD2 or MD5:
+# jdk.security.providers.filter=!*.*.*MD2*; !*.*.*MD5*; *
+#
+#jdk.security.providers.filter=

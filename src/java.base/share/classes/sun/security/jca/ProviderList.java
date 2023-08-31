@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -374,7 +374,7 @@ public final class ProviderList {
             for (i = 0; i < pList.size(); i++) {
                 Provider p = getProvider(pList.get(i).provider);
                 Service s = p.getService(type, name);
-                if (s != null) {
+                if (s != null && ProvidersFilter.isAllowed(s)) {
                     return s;
                 }
             }
@@ -383,7 +383,7 @@ public final class ProviderList {
         for (i = 0; i < configs.length; i++) {
             Provider p = getProvider(i);
             Service s = p.getService(type, name);
-            if (s != null) {
+            if (s != null && ProvidersFilter.isAllowed(s)) {
                 return s;
             }
         }
@@ -519,14 +519,14 @@ public final class ProviderList {
                 if (type != null) {
                     // simple lookup
                     Service s = p.getService(type, algorithm);
-                    if (s != null) {
+                    if (s != null && ProvidersFilter.isAllowed(s)) {
                         addService(s);
                     }
                 } else {
                     // parallel lookup
                     for (ServiceId id : ids) {
                         Service s = p.getService(id.type, id.algorithm);
-                        if (s != null) {
+                        if (s != null && ProvidersFilter.isAllowed(s)) {
                             addService(s);
                         }
                     }
