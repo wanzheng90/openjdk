@@ -25,10 +25,15 @@
 
 package sun.nio.fs;
 
-import java.nio.file.attribute.*;
-import java.util.concurrent.TimeUnit;
-import java.util.Set;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.UserPrincipal;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unix implementation of PosixFileAttributes.
@@ -51,14 +56,27 @@ class UnixFileAttributes
     private long    st_mtime_nsec;
     private long    st_ctime_sec;
     private long    st_ctime_nsec;
-    private long    st_birthtime_sec;
+    protected long  st_birthtime_sec;
 
     // created lazily
     private volatile UserPrincipal owner;
     private volatile GroupPrincipal group;
     private volatile UnixFileKey key;
 
-    private UnixFileAttributes() {
+    protected UnixFileAttributes() {
+    }
+
+    // get the UnixFileAttributes for a given file, store in the
+    // provided instance
+    static UnixFileAttributes get(UnixPath path,
+                                  boolean followLinks,
+                                  UnixFileAttributes attrs) throws UnixException {
+        if (followLinks) {
+            UnixNativeDispatcher.stat(path, attrs);
+        } else {
+            UnixNativeDispatcher.lstat(path, attrs);
+        }
+        return attrs;
     }
 
     // get the UnixFileAttributes for a given file
@@ -66,12 +84,7 @@ class UnixFileAttributes
         throws UnixException
     {
         UnixFileAttributes attrs = new UnixFileAttributes();
-        if (followLinks) {
-            UnixNativeDispatcher.stat(path, attrs);
-        } else {
-            UnixNativeDispatcher.lstat(path, attrs);
-        }
-        return attrs;
+        return get(path, followLinks, attrs);
     }
 
     // get the UnixFileAttributes for a given file. Returns null if the file does not exist.
@@ -90,6 +103,12 @@ class UnixFileAttributes
     // get the UnixFileAttributes for an open file
     static UnixFileAttributes get(int fd) throws UnixException {
         UnixFileAttributes attrs = new UnixFileAttributes();
+        return get(fd, attrs);
+    }
+
+    // get the UnixFileAttributes for an open file, store the attributes in
+    // the given instance
+    static UnixFileAttributes get(int fd, UnixFileAttributes attrs) throws UnixException {
         UnixNativeDispatcher.fstat(fd, attrs);
         return attrs;
     }
@@ -118,7 +137,7 @@ class UnixFileAttributes
     int uid()   { return st_uid; }
     int gid()   { return st_gid; }
 
-    private static FileTime toFileTime(long sec, long nsec) {
+    protected static FileTime toFileTime(long sec, long nsec) {
         if (nsec == 0) {
             return FileTime.from(sec, TimeUnit.SECONDS);
         } else {
@@ -266,7 +285,7 @@ class UnixFileAttributes
 
 
     // wrap a UnixFileAttributes object as a BasicFileAttributes
-    private static class UnixAsBasicFileAttributes implements BasicFileAttributes {
+    static class UnixAsBasicFileAttributes implements BasicFileAttributes {
         private final UnixFileAttributes attrs;
 
         private UnixAsBasicFileAttributes(UnixFileAttributes attrs) {

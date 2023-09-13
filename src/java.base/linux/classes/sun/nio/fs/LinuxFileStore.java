@@ -74,9 +74,9 @@ class LinuxFileStore
             fs.getMountEntries("/proc/mounts");
         UnixPath parent = path.getParent();
         while (parent != null) {
-            UnixFileAttributes attrs = null;
+            LinuxFileAttributes attrs = null;
             try {
-                attrs = UnixFileAttributes.get(parent, true);
+                attrs = LinuxFileAttributes.get(parent, true);
             } catch (UnixException x) {
                 x.rethrowAsIOException(parent);
             }

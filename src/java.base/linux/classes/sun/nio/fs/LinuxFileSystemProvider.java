@@ -25,12 +25,22 @@
 
 package sun.nio.fs;
 
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.nio.file.spi.FileTypeDetector;
 import java.io.IOException;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.UserDefinedFileAttributeView;
+import java.nio.file.spi.FileTypeDetector;
 
 import jdk.internal.util.StaticProperty;
+import sun.nio.fs.UnixFileAttributeViews.Posix;
 
 /**
  * Linux implementation of FileSystemProvider
@@ -65,6 +75,20 @@ class LinuxFileSystemProvider extends UnixFileSystemProvider {
             return (V) new LinuxUserDefinedFileAttributeView(UnixPath.toUnixPath(obj),
                                                              Util.followLinks(options));
         }
+        if (type == BasicFileAttributeView.class) {
+            return (V) new LinuxBasicAttributesView(UnixPath.toUnixPath(obj),
+                                                    Util.followLinks(options));
+        }
+        if (type == PosixFileAttributeView.class) {
+            return (V) new LinuxPosixAttributesView(UnixPath.toUnixPath(obj),
+                                                    Util.followLinks(options));
+        }
+        if (type == FileOwnerAttributeView.class) {
+            Posix posixView = new LinuxPosixAttributesView(UnixPath.toUnixPath(obj),
+                                                           Util.followLinks(options));
+            return (V) UnixFileAttributeViews.createOwnerView(posixView);
+        }
+
         return super.getFileAttributeView(obj, type, options);
     }
 
@@ -81,6 +105,19 @@ class LinuxFileSystemProvider extends UnixFileSystemProvider {
             return new LinuxUserDefinedFileAttributeView(UnixPath.toUnixPath(obj),
                                                          Util.followLinks(options));
         }
+        if (name.equals("basic")) {
+            return (DynamicFileAttributeView)getFileAttributeView(obj, BasicFileAttributeView.class, options);
+        }
+        if (name.equals("posix")) {
+            return (DynamicFileAttributeView)getFileAttributeView(obj, PosixFileAttributeView.class, options);
+        }
+        if (name.equals("owner")) {
+            return (DynamicFileAttributeView)getFileAttributeView(obj, FileOwnerAttributeView.class, options);
+        }
+        if (name.equals("unix")) {
+            return new LinuxUnixAttributesView(UnixPath.toUnixPath(obj),
+                                                Util.followLinks(options));
+        }
         return super.getFileAttributeView(obj, name, options);
     }
 
@@ -94,6 +131,14 @@ class LinuxFileSystemProvider extends UnixFileSystemProvider {
         if (type == DosFileAttributes.class) {
             DosFileAttributeView view =
                 getFileAttributeView(file, DosFileAttributeView.class, options);
+            return (A) view.readAttributes();
+        } else if (type == BasicFileAttributes.class) {
+            BasicFileAttributeView view =
+                getFileAttributeView(file, BasicFileAttributeView.class, options);
+            return (A) view.readAttributes();
+        } else if (type == PosixFileAttributes.class) {
+            PosixFileAttributeView view =
+                    getFileAttributeView(file, PosixFileAttributeView.class, options);
             return (A) view.readAttributes();
         } else {
             return super.readAttributes(file, type, options);

@@ -25,14 +25,33 @@
 
 package sun.nio.fs;
 
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.io.IOException;
-
 import static sun.nio.fs.UnixConstants.*;
-import static sun.nio.fs.UnixNativeDispatcher.*;
+import static sun.nio.fs.UnixNativeDispatcher.chmod;
+import static sun.nio.fs.UnixNativeDispatcher.chown;
+import static sun.nio.fs.UnixNativeDispatcher.close;
+import static sun.nio.fs.UnixNativeDispatcher.fchmod;
+import static sun.nio.fs.UnixNativeDispatcher.futimens;
+import static sun.nio.fs.UnixNativeDispatcher.futimensSupported;
+import static sun.nio.fs.UnixNativeDispatcher.futimes;
+import static sun.nio.fs.UnixNativeDispatcher.futimesSupported;
+import static sun.nio.fs.UnixNativeDispatcher.lchown;
+import static sun.nio.fs.UnixNativeDispatcher.lutimes;
+import static sun.nio.fs.UnixNativeDispatcher.lutimesSupported;
+import static sun.nio.fs.UnixNativeDispatcher.open;
+import static sun.nio.fs.UnixNativeDispatcher.utimes;
+
+import java.io.IOException;
+import java.nio.file.ProviderMismatchException;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.UserPrincipal;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 class UnixFileAttributeViews {
 
@@ -442,6 +461,10 @@ class UnixFileAttributeViews {
     }
 
     static FileOwnerAttributeViewImpl createOwnerView(UnixPath file, boolean followLinks) {
-        return new FileOwnerAttributeViewImpl(createPosixView(file, followLinks));
+        return createOwnerView(createPosixView(file, followLinks));
+    }
+
+    static FileOwnerAttributeViewImpl createOwnerView(Posix posixView) {
+        return new FileOwnerAttributeViewImpl(posixView);
     }
 }

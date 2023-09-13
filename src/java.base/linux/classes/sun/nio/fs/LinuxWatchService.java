@@ -25,13 +25,24 @@
 
 package sun.nio.fs;
 
-import java.nio.file.*;
-import java.util.*;
-import java.io.IOException;
-import jdk.internal.misc.Unsafe;
+import static sun.nio.fs.UnixConstants.EAGAIN;
+import static sun.nio.fs.UnixConstants.EMFILE;
+import static sun.nio.fs.UnixConstants.ENOSPC;
+import static sun.nio.fs.UnixConstants.EWOULDBLOCK;
+import static sun.nio.fs.UnixNativeDispatcher.read;
+import static sun.nio.fs.UnixNativeDispatcher.write;
 
-import static sun.nio.fs.UnixNativeDispatcher.*;
-import static sun.nio.fs.UnixConstants.*;
+import java.io.IOException;
+import java.nio.file.NotDirectoryException;
+import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import jdk.internal.misc.Unsafe;
 
 /**
  * Linux implementation of WatchService based on inotify.
@@ -237,9 +248,9 @@ class LinuxWatchService
             }
 
             // check file is directory
-            UnixFileAttributes attrs = null;
+            LinuxFileAttributes attrs = null;
             try {
-                attrs = UnixFileAttributes.get(dir, true);
+                attrs = LinuxFileAttributes.get(dir, true);
             } catch (UnixException x) {
                 return x.asIOException(dir);
             }

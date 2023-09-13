@@ -25,14 +25,17 @@
 
 package sun.nio.fs;
 
-import java.nio.file.attribute.*;
+import static sun.nio.fs.UnixConstants.ENODATA;
+import static sun.nio.fs.UnixNativeDispatcher.close;
+
+import java.io.IOException;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.Map;
 import java.util.Set;
-import java.io.IOException;
-import jdk.internal.misc.Unsafe;
 
-import static sun.nio.fs.UnixNativeDispatcher.*;
-import static sun.nio.fs.UnixConstants.*;
+import jdk.internal.misc.Unsafe;
 
 /**
  * Linux implementation of DosFileAttributeView for use on file systems such
@@ -120,7 +123,7 @@ class LinuxDosFileAttributeView
         int fd = -1;
         try {
              fd = file.openForAttributeAccess(followLinks);
-             final UnixFileAttributes attrs = UnixFileAttributes.get(fd);
+             final LinuxFileAttributes attrs = LinuxFileAttributes.get(fd);
              final int dosAttribute = getDosAttribute(fd);
 
              return new DosFileAttributes() {
