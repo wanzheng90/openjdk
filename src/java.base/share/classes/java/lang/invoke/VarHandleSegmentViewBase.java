@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,14 @@
 
 package java.lang.invoke;
 
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.vm.annotation.ForceInline;
+
+import java.util.Objects;
+
+import static java.lang.invoke.MethodHandleStatics.UNSAFE;
+
 /**
  * Base class for memory segment var handle view implementations.
  */
@@ -36,6 +44,10 @@ abstract sealed class VarHandleSegmentViewBase extends VarHandle permits
         VarHandleSegmentAsInts,
         VarHandleSegmentAsLongs,
         VarHandleSegmentAsShorts {
+
+    static final boolean BE = UNSAFE.isBigEndian();
+
+    static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
     /** endianness **/
     final boolean be;
@@ -51,6 +63,24 @@ abstract sealed class VarHandleSegmentViewBase extends VarHandle permits
         this.be = be;
         this.length = length;
         this.alignmentMask = alignmentMask;
+    }
+
+    @ForceInline
+    static AbstractMemorySegmentImpl checkAddress(Object obb, long offset, long length, boolean ro) {
+        AbstractMemorySegmentImpl oo = (AbstractMemorySegmentImpl) Objects.requireNonNull(obb);
+        oo.checkAccess(offset, length, ro);
+        return oo;
+    }
+
+    @ForceInline
+    static long offsetNoVMAlignCheck(AbstractMemorySegmentImpl bb, long offset, long alignmentMask) {
+        long base = bb.unsafeGetOffset();
+        long address = base + offset;
+        long maxAlignMask = bb.maxAlignMask();
+        if (((address | maxAlignMask) & alignmentMask) != 0) {
+            throw VarHandleSegmentViewBase.newIllegalArgumentExceptionForMisalignedAccess(address);
+        }
+        return address;
     }
 
     static IllegalArgumentException newIllegalArgumentExceptionForMisalignedAccess(long address) {
