@@ -73,12 +73,12 @@ abstract sealed class VarHandleSegmentViewBase extends VarHandle permits
     }
 
     @ForceInline
-    static long offsetNoVMAlignCheck(AbstractMemorySegmentImpl bb, long offset, long alignmentMask) {
+    static long offsetPlain(AbstractMemorySegmentImpl bb, long offset, long alignmentMask) {
         long base = bb.unsafeGetOffset();
         long address = base + offset;
         long maxAlignMask = bb.maxAlignMask();
         if (((address | maxAlignMask) & alignmentMask) != 0) {
-            throw VarHandleSegmentViewBase.newIllegalArgumentExceptionForMisalignedAccess(address);
+            throw newIllegalArgumentExceptionForMisalignedAccess(address);
         }
         return address;
     }
