@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,12 @@
  * questions.
  */
 
-package org.openjdk.foreigntest;
+#include <jni.h>
 
-import java.lang.foreign.*;
+#include <Windows.h>
 
-public class PanamaMain {
-   public static void main(String[] args) {
-       System.out.println("Trying to obtain a downcall handle");
-       Linker.nativeLinker().downcallHandle(FunctionDescriptor.ofVoid());
-       System.out.println("Got downcall handle");
-   }
+const DWORD EX_CODE = 42;
+
+JNIEXPORT void JNICALL Java_UncaughtNativeExceptionTest_00024Crasher_throwException(JNIEnv* env, jclass cls) {
+  RaiseException(EX_CODE, EXCEPTION_NONCONTINUABLE, 0, NULL);
 }
