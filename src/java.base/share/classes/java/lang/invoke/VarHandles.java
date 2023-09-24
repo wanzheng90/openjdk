@@ -196,35 +196,36 @@ final class VarHandles {
 
         Class<?> componentType = arrayClass.getComponentType();
 
+        int aoffset = UNSAFE.arrayBaseOffset(arrayClass);
+        int ascale = UNSAFE.arrayIndexScale(arrayClass);
+        int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
+
         if (!componentType.isPrimitive()) {
-            int aoffset = UNSAFE.arrayBaseOffset(arrayClass);
-            int ascale = UNSAFE.arrayIndexScale(arrayClass);
-            int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             return maybeAdapt(new VarHandleReferences.Array(aoffset, ashift, arrayClass));
         }
         else if (componentType == boolean.class) {
-            return maybeAdapt(VarHandleBooleans.Array.INSTANCE);
+            return maybeAdapt(new VarHandleBooleans.Array(aoffset, ashift));
         }
         else if (componentType == byte.class) {
-            return maybeAdapt(VarHandleBytes.Array.INSTANCE);
+            return maybeAdapt(new VarHandleBytes.Array(aoffset, ashift));
         }
         else if (componentType == short.class) {
-            return maybeAdapt(VarHandleShorts.Array.INSTANCE);
+            return maybeAdapt(new VarHandleShorts.Array(aoffset, ashift));
         }
         else if (componentType == char.class) {
-            return maybeAdapt(VarHandleChars.Array.INSTANCE);
+            return maybeAdapt(new VarHandleChars.Array(aoffset, ashift));
         }
         else if (componentType == int.class) {
-            return maybeAdapt(VarHandleInts.Array.INSTANCE);
+            return maybeAdapt(new VarHandleInts.Array(aoffset, ashift));
         }
         else if (componentType == long.class) {
-            return maybeAdapt(VarHandleLongs.Array.INSTANCE);
+            return maybeAdapt(new VarHandleLongs.Array(aoffset, ashift));
         }
         else if (componentType == float.class) {
-            return maybeAdapt(VarHandleFloats.Array.INSTANCE);
+            return maybeAdapt(new VarHandleFloats.Array(aoffset, ashift));
         }
         else if (componentType == double.class) {
-            return maybeAdapt(VarHandleDoubles.Array.INSTANCE);
+            return maybeAdapt(new VarHandleDoubles.Array(aoffset, ashift));
         }
         else {
             throw new UnsupportedOperationException();
