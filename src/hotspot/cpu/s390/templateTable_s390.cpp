@@ -2964,7 +2964,8 @@ void TemplateTable::jvmti_post_field_mod(Register cache,
 void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteControl rc) {
   transition(vtos, vtos);
 
-  const Register obj           = Z_tmp_1;
+  const Register obj           = Z_tmp_1; // <- We can't use Z_R1, why ? because pop_ptr is that register.
+                                          // need to try out Z_R0 :-)
   const Register off           = Z_tmp_2;
   const Register cache         = Z_tmp_1;
   const Register index         = Z_tmp_2;
@@ -3042,7 +3043,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     patch_bytecode(Bytecodes::_fast_bputfield, bc_reg, patch_tmp, true, byte_no);
   }
   __ z_bru(Done);
-  BTB_END( is_Byte, bsize, "putfield_or_static:is_Byte");
+  BTB_END(is_Byte, bsize, "putfield_or_static:is_Byte");
 
   // ztos
   BTB_BEGIN(is_Bool, bsize, "putfield_or_static:is_Bool");
@@ -3069,7 +3070,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     patch_bytecode(Bytecodes::_fast_cputfield, bc_reg, patch_tmp, true, byte_no);
   }
   __ z_bru(Done);
-  BTB_END( is_Char, bsize, "putfield_or_static:is_Char");
+  BTB_END(is_Char, bsize, "putfield_or_static:is_Char");
 
   // stos
   BTB_BEGIN(is_Short, bsize, "putfield_or_static:is_Short");
@@ -3082,7 +3083,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     patch_bytecode(Bytecodes::_fast_sputfield, bc_reg, patch_tmp, true, byte_no);
   }
   __ z_bru(Done);
-  BTB_END( is_Short, bsize, "putfield_or_static:is_Short");
+  BTB_END(is_Short, bsize, "putfield_or_static:is_Short");
 
   // itos
   BTB_BEGIN(is_Int, bsize, "putfield_or_static:is_Int");
@@ -3095,7 +3096,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     patch_bytecode(Bytecodes::_fast_iputfield, bc_reg, patch_tmp, true, byte_no);
   }
   __ z_bru(Done);
-  BTB_END( is_Int, bsize, "putfield_or_static:is_Int");
+  BTB_END(is_Int, bsize, "putfield_or_static:is_Int");
 
   // ltos
   BTB_BEGIN(is_Long, bsize, "putfield_or_static:is_Long");
@@ -3108,7 +3109,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     patch_bytecode(Bytecodes::_fast_lputfield, bc_reg, patch_tmp, true, byte_no);
   }
   __ z_bru(Done);
-  BTB_END( is_Long, bsize, "putfield_or_static:is_Long");
+  BTB_END(is_Long, bsize, "putfield_or_static:is_Long");
 
   // ftos
   BTB_BEGIN(is_Float, bsize, "putfield_or_static:is_Float");
@@ -3121,7 +3122,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     patch_bytecode(Bytecodes::_fast_fputfield, bc_reg, patch_tmp, true, byte_no);
   }
   __ z_bru(Done);
-  BTB_END( is_Float, bsize, "putfield_or_static:is_Float");
+  BTB_END(is_Float, bsize, "putfield_or_static:is_Float");
 
   // dtos
   BTB_BEGIN(is_Double, bsize, "putfield_or_static:is_Double");
@@ -3134,49 +3135,49 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     patch_bytecode(Bytecodes::_fast_dputfield, bc_reg, patch_tmp, true, byte_no);
   }
   __ z_bru(Done);
-  BTB_END( is_Double, bsize, "putfield_or_static:is_Double");
+  BTB_END(is_Double, bsize, "putfield_or_static:is_Double");
 
   // atos
   BTB_BEGIN(is_Object, bsize, "putfield_or_static:is_Object");
   __ z_bru(atosHandler);
-  BTB_END( is_Object, bsize, "putfield_or_static:is_Object");
+  BTB_END(is_Object, bsize, "putfield_or_static:is_Object");
 
   // Bad state detection comes at no extra runtime cost.
   BTB_BEGIN(is_badState9, bsize, "putfield_or_static:is_badState9");
   __ z_illtrap();
   __ z_bru(is_badState);
-  BTB_END( is_badState9, bsize, "putfield_or_static:is_badState9");
+  BTB_END(is_badState9, bsize, "putfield_or_static:is_badState9");
   BTB_BEGIN(is_badStateA, bsize, "putfield_or_static:is_badStateA");
   __ z_illtrap();
   __ z_bru(is_badState);
-  BTB_END( is_badStateA, bsize, "putfield_or_static:is_badStateA");
+  BTB_END(is_badStateA, bsize, "putfield_or_static:is_badStateA");
   BTB_BEGIN(is_badStateB, bsize, "putfield_or_static:is_badStateB");
   __ z_illtrap();
   __ z_bru(is_badState);
-  BTB_END( is_badStateB, bsize, "putfield_or_static:is_badStateB");
+  BTB_END(is_badStateB, bsize, "putfield_or_static:is_badStateB");
   BTB_BEGIN(is_badStateC, bsize, "putfield_or_static:is_badStateC");
   __ z_illtrap();
   __ z_bru(is_badState);
-  BTB_END( is_badStateC, bsize, "putfield_or_static:is_badStateC");
+  BTB_END(is_badStateC, bsize, "putfield_or_static:is_badStateC");
   BTB_BEGIN(is_badStateD, bsize, "putfield_or_static:is_badStateD");
   __ z_illtrap();
   __ z_bru(is_badState);
-  BTB_END( is_badStateD, bsize, "putfield_or_static:is_badStateD");
+  BTB_END(is_badStateD, bsize, "putfield_or_static:is_badStateD");
   BTB_BEGIN(is_badStateE, bsize, "putfield_or_static:is_badStateE");
   __ z_illtrap();
   __ z_bru(is_badState);
-  BTB_END( is_badStateE, bsize, "putfield_or_static:is_badStateE");
+  BTB_END(is_badStateE, bsize, "putfield_or_static:is_badStateE");
   BTB_BEGIN(is_badStateF, bsize, "putfield_or_static:is_badStateF");
   __ z_illtrap();
   __ z_bru(is_badState);
-  BTB_END( is_badStateF, bsize, "putfield_or_static:is_badStateF");
+  BTB_END(is_badStateF, bsize, "putfield_or_static:is_badStateF");
 
   __ align_address(64);
   BIND(is_badState);  // Do this outside branch table. Needs a lot of space.
   {
     unsigned int b_off = __ offset();
     if (is_static) __ stop_static("Bad state in putstatic");
-    else            __ stop_static("Bad state in putfield");
+    else           __ stop_static("Bad state in putfield");
     unsigned int e_off = __ offset();
   }
 
@@ -3185,7 +3186,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
                       // There is a lot of code generated.
                       // Therefore: generate the handler outside of branch table.
                       // There is no performance penalty. The additional branch
-                      // to here is compensated for by the fallthru to "Done".
+                      // to here is compensated for by the fallthrough to "Done".
   {
     unsigned int b_off = __ offset();
 
@@ -3210,7 +3211,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
   NearLabel notVolatile;
 
   if (!flags.is_volatile()) {
-    __ testbit(flags, ConstantPoolCacheEntry::is_volatile_shift);
+    __ testbit(flags, ResolvedFieldEntry::is_volatile_shift);
     __ z_brz(notVolatile);
   }
   __ z_fence();
@@ -3388,7 +3389,7 @@ void TemplateTable::fast_storefield(TosState state) {
   //  Check for volatile store.
   Label notVolatile;
 
-  __ testbit(flags, ConstantPoolCacheEntry::is_volatile_shift);
+  __ testbit(flags, ResolvedFieldEntry::is_volatile_shift);
   __ z_brz(notVolatile);
   __ z_fence();
 
