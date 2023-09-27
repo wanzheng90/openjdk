@@ -2403,7 +2403,7 @@ void TemplateTable::resolve_cache_and_index_for_field(int byte_no,
                                                       Register cache,
                                                       Register index) {
 
-  assert_different_registers(cache, index, Z_R1_scratch);
+  assert_different_registers(cache, index);
   assert(byte_no == f1_byte || byte_no == f2_byte, "byte_no out of range");
 
   NearLabel resolved;
