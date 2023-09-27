@@ -3084,7 +3084,12 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
   BTB_BEGIN(is_Byte, bsize, "putfield_or_static:is_Byte");
   __ pop(btos);
   if (!is_static) {
-    pop_and_check_object(obj);
+    // pop_and_check_object(obj);
+    z_lg(Z_R1_scratch, Interpreter::expr_offset_in_bytes(0), Z_esp);
+    TemplateTable::pop(); // see line 1301
+    __ null_check(Z_R1_scratch);  // for field access must check obj.
+    __ verify_oop(Z_R1_scratch);
+    debug_only(verify_esp(Z_esp, Z_R1_scratch));
   }
   __ z_stc(Z_tos, field);
   if (do_rewrite) {
